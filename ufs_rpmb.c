@@ -68,23 +68,13 @@ static const char *const rpmb_purge_status[] = {
 #define RESP_CONF_BLOCK_WRITE  0x600
 #define RESP_CONF_BLOCK_READ   0x700
 
-#define RPMB_KEY_SIZE 32
-#define RPMB_MAC_SIZE 32
-#define RPMB_NONCE_SIZE 16
-#define RPMB_DATA_SIZE 256
-
 #define UFS_BSG_PATH "/dev/ufs-bsg0"
 
-#define DEFAULT_RPMB_NUM_BLOCKS 64
-
-#define MAX_ADDRESS 0xFFFF
 #define SECOND_BYTE_MASK 0xFF00
 
 #define MAX_RETRY 3
 
-static unsigned char key[RPMB_KEY_SIZE];
-
-#define CUC(x) ((const unsigned char *)(x))
+static unsigned char key_buff[RPMB_KEY_SIZE];
 
 extern int do_read_desc(int fd, struct ufs_bsg_request *bsg_req,
 		struct ufs_bsg_reply *bsg_rsp, __u8 idn, __u8 index,
@@ -674,7 +664,7 @@ int do_rpmb(struct tool_options *opt)
 
 	switch (opt->idn) {
 	case AUTHENTICATION_KEY:
-		key_ptr = get_auth_key(opt->keypath);
+		key_ptr = get_auth_key(opt->keypath, key_buff);
 		if (key_ptr == NULL)
 			goto out;
 		rc = do_key(fd, key_ptr, opt->region, opt->sg_type);
@@ -690,7 +680,7 @@ int do_rpmb(struct tool_options *opt)
 			goto out;
 		}
 		if (opt->keypath[0] != 0) {
-			key_ptr = get_auth_key(opt->keypath);
+			key_ptr = get_auth_key(opt->keypath, key_buff);
 			if (key_ptr == NULL)
 				goto out;
 		}
@@ -701,7 +691,7 @@ int do_rpmb(struct tool_options *opt)
 			printf("Finish to read RPMB data\n");
 	break;
 	case WRITE_RPMB:
-		key_ptr = get_auth_key(opt->keypath);
+		key_ptr = get_auth_key(opt->keypath, key_buff);
 		if (key_ptr == NULL)
 			goto out;
 
@@ -723,7 +713,7 @@ int do_rpmb(struct tool_options *opt)
 	case READ_SEC_RPMB_CONF_BLOCK:
 		lun = opt->lun;
 		if (opt->keypath[0] != 0) {
-			key_ptr = get_auth_key(opt->keypath);
+			key_ptr = get_auth_key(opt->keypath, key_buff);
 			if (key_ptr == NULL)
 				goto out;
 		}
@@ -739,7 +729,7 @@ int do_rpmb(struct tool_options *opt)
 				opt->sg_type);
 	break;
 	case WRITE_SEC_RPMB_CONF_BLOCK:
-		key_ptr = get_auth_key(opt->keypath);
+		key_ptr = get_auth_key(opt->keypath, key_buff);
 		if (key_ptr == NULL)
 			goto out;
 
