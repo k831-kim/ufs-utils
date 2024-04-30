@@ -19,8 +19,8 @@
 #define QUERY_DESC_MAX_SIZE       255
 
 enum sg_struct_type {
-	SG4_TYPE = 0,
-	SG3_TYPE
+	SG3_TYPE  = 0,
+	SG4_TYPE
 };
 
 /* Flag idn for Query Requests*/
