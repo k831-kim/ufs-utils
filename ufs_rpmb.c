@@ -708,7 +708,7 @@ void rpmb_help(char *tool_name)
 		"for Secure Write Config Read\n");
 	printf("\n\t-w\t path to data file\n");
 	printf("\n\t-m\t RPMB region.\n");
-	printf("\n\t-g\t sg struct ver - 0: SG_IO_VER4 (default), 1: SG_IO_VER3\n");
+	printf("\n\t-g\t sg struct ver - 0: SG_IO_VER3 (default), 1: SG_IO_VER4\n");
 	printf("\n\tExample - Read 16MB of data from RPMB LUN started "
 		"from address 0 to output file\n"
 		"\t\t  %s rpmb -t 2 -p /dev/0:0:0:49476 -s 0 -n 65536 -w output_file\n",
