@@ -533,6 +533,14 @@ static int verify_rpmb_arg(struct tool_options *options)
 	break;
 	case READ_WRITE_COUNTER:
 	break;
+	case PURGE_ENABLE:
+		if (options->keypath[0] == 0) {
+			print_error("Key path is missed");
+			ret = ERROR;
+		}
+	break;
+	case READ_PURGE_STATUS:
+	break;
 	default:
 		print_error("Unsupported RPMB cmd %d",
 			    options->idn);
