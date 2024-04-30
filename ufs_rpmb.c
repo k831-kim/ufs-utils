@@ -24,36 +24,6 @@
 #include "hmac_sha2.h"
 #include "scsi_bsg_util.h"
 
-enum rpmb_op_type {
-	RPMB_WRITE_KEY      = 0x01,
-	RPMB_READ_CNT       = 0x02,
-	RPMB_WRITE          = 0x03,
-	RPMB_READ           = 0x04,
-	RPMB_READ_RESP      = 0x05,
-	RPMB_SEC_CONF_WRITE = 0x06,
-	RPMB_SEC_CONF_READ  = 0x07,
-	RPMB_PURGE_ENABLE   = 0x08,
-	READ_RPMB_PURGE_STATUS = 0x09
-
-};
-
-/* description of the sense key values */
-static const char *const rpmb_res_txt[] = {
-	"Success",
-	"General failure",
-	"Authentication failure",
-	"Counter failure",
-	"Address failure",
-	"Write failure",
-	"Read failure",
-	"Authentication Key not yet programmed",
-	"Secure Write Protect Configuration Block access failure",
-	"Invalid Secure Write Protect Block Configuration parameter",
-	"Secure Write Protection not applicable",
-	"Unsupported Request Type",
-	"Rejected, RPMB purge operation in progress"
-};
-
 static const char *const rpmb_purge_status[] = {
 	"RPMB Purge not initiated (reset value)",
 	"RPMB Purge in progress",
@@ -106,14 +76,6 @@ static int rpmb_calc_hmac_sha256(struct rpmb_frame *frames, ssize_t blocks_cnt,
 	hmac_sha256_final(&ctx, mac, mac_size);
 
 	return 0;
-}
-
-static void print_operation_error(__u16 result)
-{
-	if (result <= 0xC)
-		printf("\n %s\n", rpmb_res_txt[result]);
-	else
-		printf("\n Unsupported RPMB Operation Error %d\n", result);
 }
 
 static void print_rpmb_purge_status_res(__u8 status)
@@ -621,32 +583,6 @@ out:
 		return ret;
 }
 
-static unsigned char *get_auth_key(char *key_path)
-{
-	unsigned char *pkey = NULL;
-	int key_fd = INVALID;
-	ssize_t read_size;
-
-	if (key_path == NULL)
-		return NULL;
-
-	key_fd = open(key_path, O_RDONLY);
-	if (key_fd < 0) {
-		perror("Key file open");
-	} else {
-		read_size = read(key_fd, key, RPMB_KEY_SIZE);
-		if (read_size < RPMB_KEY_SIZE) {
-			print_error("Key must be %d bytes length,was read %d",
-				    RPMB_KEY_SIZE, read_size);
-		} else
-			pkey = key;
-	}
-
-	if (key_fd != INVALID)
-		close(key_fd);
-	return pkey;
-}
-
 int do_rpmb(struct tool_options *opt)
 {
 	int rc = INVALID;
@@ -746,7 +682,7 @@ int do_rpmb(struct tool_options *opt)
 					 opt->sg_type);
 	break;
 	case PURGE_ENABLE:
-		key_ptr = get_auth_key(opt->keypath);
+		key_ptr = get_auth_key(opt->keypath, key_buff);
 		if (key_ptr == NULL)
 			goto out;
 
