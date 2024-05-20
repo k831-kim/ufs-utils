@@ -35,33 +35,38 @@ enum rpmb_cmd_type {
 	WRITE_RPMB,
 	WRITE_SEC_RPMB_CONF_BLOCK,
 	READ_SEC_RPMB_CONF_BLOCK,
+	PURGE_ENABLE,
+	READ_PURGE_STATUS,
 	RPMB_CMD_MAX
 };
 
 enum rpmb_op_type {
-        RPMB_WRITE_KEY      = 0x01,
-        RPMB_READ_CNT       = 0x02,
-        RPMB_WRITE          = 0x03,
-        RPMB_READ           = 0x04,
-        RPMB_READ_RESP      = 0x05,
-        RPMB_SEC_CONF_WRITE = 0x06,
-        RPMB_SEC_CONF_READ  = 0x07,
-
+	RPMB_WRITE_KEY      = 0x01,
+	RPMB_READ_CNT       = 0x02,
+	RPMB_WRITE          = 0x03,
+	RPMB_READ           = 0x04,
+	RPMB_READ_RESP      = 0x05,
+	RPMB_SEC_CONF_WRITE = 0x06,
+	RPMB_SEC_CONF_READ  = 0x07,
+	RPMB_PURGE_ENABLE   = 0x08,
+	READ_RPMB_PURGE_STATUS = 0x09
 };
 
 /* description of the sense key values */
 static const char *const rpmb_res_txt[] = {
-        "Success",
-        "General failure",
-        "Authentication failure",
-        "Counter failure",
-        "Address failure",
-        "Write failure",
-        "Read failure",
-        "Authentication Key not yet programmed",
-        "Secure Write Protect Configuration Block access failure",
-        "Invalid Secure Write Protect Block Configuration parameter",
-        "Secure Write Protection not applicable"
+	"Success",
+	"General failure",
+	"Authentication failure",
+	"Counter failure",
+	"Address failure",
+	"Write failure",
+	"Read failure",
+	"Authentication Key not yet programmed",
+	"Secure Write Protect Configuration Block access failure",
+	"Invalid Secure Write Protect Block Configuration parameter",
+	"Secure Write Protection not applicable",
+	"Unsupported Request Type",
+	"Rejected, RPMB purge operation in progress"
 };
 
 void rpmb_help(char *tool_name);
@@ -71,10 +76,10 @@ int do_arpmb(struct tool_options *opt);
 
 static inline void  print_operation_error(__u16 result)
 {
-	if (result <= 0xA)
+	if (result <= 0xC)
 		printf("\n %s\n", rpmb_res_txt[result]);
 	else
-		printf("\n Unsupported RPMB Operation Error %x\n", result);
+		printf("\n Unsupported RPMB Operation Error %d\n", result);
 }
 
 static inline unsigned char *get_auth_key(char *key_path, unsigned char * key_buff)
