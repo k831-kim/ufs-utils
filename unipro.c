@@ -217,6 +217,19 @@ static struct ufs_uic_attr_fields mipi_mphy_attrs[] = {
 	/* M-PHY RX Status Attributes */
 	{"RX_FSM_State", 0x00C1, (GETTABLE)},
 
+	/* EYEMON Capability Attributes */
+	{"RX_EYEMON_Capability", 0x00F1, (GETTABLE | SETTABLE)},
+	{"RX_EYEMON_Timing_MAX_Steps_Capability", 0x00F2, GETTABLE},
+	{"RX_EYEMON_Timing_MAX_Offset_Capability", 0x00F3, GETTABLE},
+	{"RX_EYEMON_Voltage_MAX_Steps_Capability", 0x00F4, GETTABLE},
+	{"RX_EYEMON_Voltage_MAX_Offset_Capability", 0x00F5, GETTABLE},
+	{"RX_EYEMON_Enable", 0x00F6, (GETTABLE | SETTABLE)},
+	{"RX_EYEMON_Timing_Steps", 0x00F7, (GETTABLE | SETTABLE)},
+	{"RX_EYEMON_Voltage_Steps", 0x00F8, (GETTABLE | SETTABLE)},
+	{"RX_EYEMON_Target_Test", 0x00F9, (GETTABLE | SETTABLE)},
+	{"RX_EYEMON_Tested_Count", 0x00FA, (GETTABLE | SETTABLE)},//Should be only getable
+	{"RX_EYEMON_Error_Count", 0x00FB, (GETTABLE | SETTABLE)},
+	{"RX_EYEMON_Start", 0x00FC, (GETTABLE | SETTABLE)}, //Should be only getable
 	/* M-PHY OMC Status Attributes */
 	{"OMC_TYPE_Capability", 0x00D1, (GETTABLE)},
 	{"MC_HSMODE_Capability", 0x00D2, (GETTABLE)},
@@ -393,7 +406,7 @@ static void display(int id, const char *name, int local, int peer)
 	       id, name, local, peer);
 }
 
-static int unipro_read(int fd, int idn, int id, __u8 all)
+static int unipro_read(int fd, int idn, int id, int sel, __u8 all)
 {
 	int index, qts;
 	int mib_val_local, mib_val_peer;
@@ -409,13 +422,16 @@ static int unipro_read(int fd, int idn, int id, __u8 all)
 		for (index = 0; index < qts; index++) {
 			if (p[index].acc_mode & GETTABLE) {
 				mib_val_local =
-				ufshcd_dme_get_attr(fd,
-						    UIC_ARG_MIB(p[index].id),
-						    DME_LOCAL);
+				ufshcd_dme_get_attr(
+					fd,
+					UIC_ARG_MIB_SEL(p[index].id, sel),
+					DME_LOCAL);
+
 				mib_val_peer =
-				ufshcd_dme_get_attr(fd,
-						    UIC_ARG_MIB(p[index].id),
-						    DME_PEER);
+				ufshcd_dme_get_attr(
+					fd,
+					UIC_ARG_MIB_SEL(p[index].id, sel),
+					DME_PEER);
 
 				if (mib_val_local != ERROR &&
 				    mib_val_peer != ERROR) {
@@ -439,13 +455,14 @@ static int unipro_read(int fd, int idn, int id, __u8 all)
 		index = check_attr_id(idn, id);
 		if (index >= 0) {
 			mib_val_local =
-				ufshcd_dme_get_attr(fd,
-						    UIC_ARG_MIB(p[index].id),
-						    DME_LOCAL);
+				ufshcd_dme_get_attr(
+					fd, UIC_ARG_MIB_SEL(p[index].id , sel),
+					DME_LOCAL);
+
 			mib_val_peer =
-				ufshcd_dme_get_attr(fd,
-						    UIC_ARG_MIB(p[index].id),
-						    DME_PEER);
+				ufshcd_dme_get_attr(
+					fd, UIC_ARG_MIB_SEL(p[index].id , sel),
+					DME_PEER);
 
 			if (mib_val_local != ERROR &&
 			    mib_val_peer != ERROR) {
@@ -472,7 +489,7 @@ static int unipro_read(int fd, int idn, int id, __u8 all)
 	return ret;
 }
 
-static int unipro_write(int fd, int idn, int id, int mib_val,
+static int unipro_write(int fd, int idn, int id, int sel, int mib_val,
 			int attr_set, int target)
 {
 	int index;
@@ -483,9 +500,10 @@ static int unipro_write(int fd, int idn, int id, int mib_val,
 
 	if (index >= 0) {
 		if (p[index].acc_mode & SETTABLE) {
-			ret = ufshcd_dme_set_attr(fd,
-						  UIC_ARG_MIB(p[index].id),
-						  attr_set, mib_val, target);
+			ret = ufshcd_dme_set_attr(
+					fd,
+					UIC_ARG_MIB_SEL(p[index].id, sel),
+					attr_set, mib_val, target);
 
 			printf("%s set %s 0x%04x:%s to 0x%08x\n",
 			       (ret == OK ? "Successfully" : "Failed"),
@@ -522,14 +540,14 @@ int do_uic(struct tool_options *opt)
 
 	switch (opt->opr) {
 	case READ_ALL:
-		rt = unipro_read(fd, opt->idn, 0, 1);
+		rt = unipro_read(fd, opt->idn, 0, 0, 1);
 		break;
 	case READ:
-		rt = unipro_read(fd, opt->idn, opt->index, 0);
+		rt = unipro_read(fd, opt->idn, opt->index, opt->selector, 0);
 		break;
 	case WRITE:
 		rt = unipro_write(fd,
-				  opt->idn, opt->index,
+				  opt->idn, opt->index, opt->selector,
 				  *(__u32 *)opt->data,
 				  ATTR_SET_NOR, opt->target);
 		break;
@@ -549,8 +567,9 @@ const char *help_str =
 	"		0:	MIPI M-PHY Attributes\n"
 	"		1:	PHY-Adapter Attributes\n"
 	"		2:	DME Attributes for QoS\n\n"
-	"	-a	Read all gettable attributes of peer & local, please\n"
-	"		use -t to specify Unipro attributes idn\n\n"
+	"	-a	Read all gettable attributes of peer & local with\n"
+	"		GenSelectorIndex = 0, please use -t to specify Unipro\n"
+	"		attributes idn\n\n"
 	"	-r	Read single attribute of peer & local, please use -i\n"
 	"		to specify attribute ID, and -t for associated idn\n\n"
 	"	-w data <peer|local>\n"
@@ -561,6 +580,7 @@ const char *help_str =
 	"		  --local : access to a local device (UFS host)\n\n"
 	"	-i ID\n"
 	"		Set attribute ID to read/write\n"
+	"	-s GenSelectorIndex \n"
 	"	-p bsg\n"
 	"		Path to ufs-bsg device\n\n"
 	"  Note :\n"
