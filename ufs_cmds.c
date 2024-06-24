@@ -309,6 +309,7 @@ struct attr_fields ufs_attrs[] = {
 /*31h*/ {"bFBOControl", BYTE, UWRT, WRITE_ONLY, DEV},
 /*32h*/ {"bFBOExecuteThreshold", BYTE, (URD|UWRT), (READ_NRML|WRITE_VLT), DEV},
 /*33h*/ {"bFBOProgressState", BYTE, URD, READ_ONLY, DEV},
+/*34h*/ {ATTR_RSRV()},
 /*35h*/ {"bDefragOperation", BYTE, (URD|UWRT), (READ_NRML|WRITE_VLT), DEV},
 /*36h*/ {"dHIDAvailableSize", DWORD, (URD|UWRT), READ_ONLY, DEV},
 /*37h*/ {"dHIDSize", DWORD, (URD|UWRT), (READ_NRML|WRITE_PRSIST), DEV},
