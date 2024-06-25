@@ -251,17 +251,17 @@ out:
 static int verify_and_set_idn(struct tool_options *options)
 {
 	int idn = INVALID;
+	char *endptr;
+
+	errno = 0;
 
 	if (options->idn != INVALID) {
 		print_error("duplicated type option");
 		goto out;
 	}
 
-	/* In case atoi returned 0. Check that is real 0 and not error
-	 * arguments. Also check that the value is in correct range
-	 */
-	idn = atoi(optarg);
-	if ((idn == 0 && strcmp(optarg, "0")) || idn < 0) {
+	idn = (int)strtol(optarg, &endptr, 0);
+	if (errno != 0 || *endptr != '\0' || idn < 0) {
 		print_error("Invalid argument for idn");
 		goto out;
 	}

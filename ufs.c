@@ -82,7 +82,7 @@ static void initialized_options(struct tool_options *options)
 	options->path[0] = '\0';
 	options->keypath[0] = '\0';
 	options->data = NULL;
-	options->sg_type = SG4_TYPE;
+	options->sg_type = SG3_TYPE;
 }
 
 static int parse_args(int argc, char **argv, command_function *func,
