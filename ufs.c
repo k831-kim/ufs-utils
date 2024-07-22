@@ -83,6 +83,7 @@ static void initialized_options(struct tool_options *options)
 	options->keypath[0] = '\0';
 	options->data = NULL;
 	options->sg_type = SG3_TYPE;
+	options->set_type = ATTR_SET_NOR;
 }
 
 static int parse_args(int argc, char **argv, command_function *func,

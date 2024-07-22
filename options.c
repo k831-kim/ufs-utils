@@ -52,6 +52,7 @@ int init_options(int opt_cnt, char *opt_arr[], struct tool_options *options)
 	static struct option long_opts[] = {
 		{"peer", no_argument, NULL, 'u'}, /* UFS device */
 		{"local", no_argument, NULL, 'l'}, /* UFS host*/
+		{"static", no_argument, NULL, 'S'},
 		/* output file for the descriptor file store */
 		{"output_file", required_argument, NULL, 'D'},
 		{"output_mode", required_argument, NULL, 'P'},
@@ -145,6 +146,10 @@ int init_options(int opt_cnt, char *opt_arr[], struct tool_options *options)
 			break;
 		case 'P':
 			rc = verify_output_mode(options);
+			break;
+		case 'S':
+			if (options->config_type_inx == UIC_TYPE)
+				options->set_type = ATTR_SET_ST;
 			break;
 		default:
 			rc = -EINVAL;

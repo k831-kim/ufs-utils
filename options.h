@@ -42,6 +42,8 @@ struct tool_options {
 	int size;
 	int offset;
 	int len;
+	/* @DME_NORMAL or @DME_STATIC */
+	int set_type;
 	/* HMR related */
 	int hmr_method;
 	int hmr_unit;
