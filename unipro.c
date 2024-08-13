@@ -286,6 +286,7 @@ static struct uic_cmd_result_code resultcode[] = {
 
 static int ufshcd_dme_get_attr(int fd, __u32 attr_sel, __u8 peer)
 {
+	int retries = UFS_UIC_COMMAND_RETRIES;
 	struct ufs_bsg_request bsg_req = { 0 };
 	struct ufs_bsg_reply bsg_rsp = { 0 };
 	struct uic_command *uic_cmd =
@@ -299,13 +300,19 @@ static int ufshcd_dme_get_attr(int fd, __u32 attr_sel, __u8 peer)
 	uic_cmd->argument1 = attr_sel;
 	bsg_req.msgcode = UPIU_TRANSACTION_UIC_CMD;
 
-	rt = send_bsg_scsi_trs(fd, &bsg_req, &bsg_rsp, sizeof(struct ufs_bsg_request),
-			       sizeof(struct ufs_bsg_reply), 0, 0, 0);
-	if (rt) {
-		print_error("%s: bsg request failed", __func__);
-		rt = ERROR;
+	do {
+		rt = send_bsg_scsi_trs(fd, &bsg_req, &bsg_rsp,
+				       sizeof(struct ufs_bsg_request),
+				       sizeof(struct ufs_bsg_reply), 0, 0, 0);
+		if (rt) {
+			print_error("%s: bsg request failed", __func__);
+			rt = ERROR;
+			continue;
+		}
+	} while (rt && (uic_cmd->command == UIC_CMD_DME_PEER_GET) && --retries);
+
+	if (rt)
 		goto out;
-	}
 
 	memcpy(&uic_rsq, &bsg_rsp.upiu_rsp.uc, UIC_CMD_SIZE);
 	res_code = uic_rsq.argument2 & MASK_UIC_COMMAND_RESULT;
@@ -330,7 +337,7 @@ static int ufshcd_dme_get_attr(int fd, __u32 attr_sel, __u8 peer)
 	} else {
 		rt = uic_rsq.argument3;
 	}
-
+	
 out:
 	return rt;
 }
@@ -338,12 +345,12 @@ out:
 static int ufshcd_dme_set_attr(int fd, __u32 attr_sel, __u8 attr_set,
 			       __u32 mib_val, __u8 peer)
 {
+	int retries = UFS_UIC_COMMAND_RETRIES;
 	struct ufs_bsg_request bsg_req = { 0 };
 	struct ufs_bsg_reply bsg_rsp = { 0 };
 	struct uic_command *uic_cmd =
 		(struct uic_command *)&bsg_req.upiu_req.uc;
 	struct uic_command uic_rsq = { 0 };
-
 	int rt = OK;
 	__u8 res_code;
 
@@ -353,14 +360,19 @@ static int ufshcd_dme_set_attr(int fd, __u32 attr_sel, __u8 attr_set,
 	uic_cmd->argument3 = mib_val;
 
 	bsg_req.msgcode = UPIU_TRANSACTION_UIC_CMD;
+	do {
+		rt = send_bsg_scsi_trs(fd, &bsg_req, &bsg_rsp,
+				       sizeof(struct ufs_bsg_request),
+				       sizeof(struct ufs_bsg_reply), 0, 0, 0);
+		if (rt) {
+			print_error("%s: bsg request failed", __func__);
+			rt = ERROR;
+			continue;
+		}
+	} while (rt && (uic_cmd->command == UIC_CMD_DME_PEER_GET) && --retries);
 
-	rt = send_bsg_scsi_trs(fd, &bsg_req, &bsg_rsp, sizeof(struct ufs_bsg_request),
-			       sizeof(struct ufs_bsg_reply), 0, 0, 0);
-	if (rt) {
-		print_error("%s: bsg request failed", __func__);
-		rt = ERROR;
+	if (rt)
 		goto out;
-	}
 
 	memcpy(&uic_rsq, &bsg_rsp.upiu_rsp.uc, UIC_CMD_SIZE);
 	res_code = uic_rsq.argument2 & MASK_UIC_COMMAND_RESULT;
@@ -382,7 +394,6 @@ static int ufshcd_dme_set_attr(int fd, __u32 attr_sel, __u8 attr_set,
 		}
 		rt = ERROR;
 	}
-
 out:
 	return rt;
 }
