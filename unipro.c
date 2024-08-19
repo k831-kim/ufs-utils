@@ -560,7 +560,7 @@ int do_uic(struct tool_options *opt)
 		rt = unipro_write(fd,
 				  opt->idn, opt->index, opt->selector,
 				  *(__u32 *)opt->data,
-				  ATTR_SET_NOR, opt->target);
+				  opt->set_type, opt->target);
 		break;
 	default:
 		rt = INVALID;
@@ -594,6 +594,8 @@ const char *help_str =
 	"	-s GenSelectorIndex \n"
 	"	-p bsg\n"
 	"		Path to ufs-bsg device\n\n"
+	"	--static set type to static\n"
+	"		Set attribute type to static \n"
 	"  Note :\n"
 	"	As for the format of the data inputted, hex number should be\n"
 	"	prefixed by 0x/0X\n"
